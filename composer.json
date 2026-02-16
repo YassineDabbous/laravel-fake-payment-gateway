@@ -1,0 +1,30 @@
+{
+    "version": "1.0.0",
+    "name": "yassinedabbous/fake-payment-gateway",
+    "description": "A simple fake payment gateway for testing Laravel applications.",
+    "type": "laravel-package",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Your Name",
+            "email": "you@example.com"
+        }
+    ],
+    "require": {
+        "php": "^8.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "YassineDabbous\\FakePaymentGateway\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "YassineDabbous\\FakePaymentGateway\\FakePaymentGatewayServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
