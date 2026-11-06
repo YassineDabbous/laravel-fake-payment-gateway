@@ -2,9 +2,11 @@
 
 namespace YassineDabbous\FakePaymentGateway\Http\Controllers;
 
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class FakePaymentGatewayController extends Controller
@@ -35,15 +37,25 @@ class FakePaymentGatewayController extends Controller
         // $transactionId = 'FPG_' . Str::random(20);
         $authoritativeTransactionId = $request->input('payment_attempt_id') ?? 'FPG_' . Str::random(20);
 
-        // Simulate sending a webhook
-        Http::post($webhookUrl, [
-            'order_id' => $orderId,
-            'transaction_id' => $authoritativeTransactionId,
-            'status' => $status,
-            'amount' => $request->input('amount'),
-            'paid_at' => now()->toDateTimeString(),
-        ]);
-        
+        // Simulate sending a webhook. The webhook url must be reachable from
+        // the app running this controller; if the POST fails (e.g. a loopback
+        // url that does not resolve here) still deliver the redirect below —
+        // the payment-page UX must never depend on webhook delivery.
+        try {
+            Http::post($webhookUrl, [
+                'order_id' => $orderId,
+                'transaction_id' => $authoritativeTransactionId,
+                'status' => $status,
+                'amount' => $request->input('amount'),
+                'paid_at' => now()->toDateTimeString(),
+            ]);
+        } catch (ConnectionException $e) {
+            Log::warning('Fake payment gateway webhook dispatch failed', [
+                'webhook_url' => $webhookUrl,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
         $returnUrl = ($status === 'success') ? $successUrl : $failureUrl;
 
         $paramsToAdd = ($status === 'success')
